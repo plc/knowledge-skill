@@ -1,6 +1,6 @@
 ---
 name: knowledge
-version: 1.2.0
+version: 1.3.0
 description: |
   Personal knowledge base for capturing, summarizing, organizing, and
   recalling knowledge from URLs, YouTube videos, documents, and files.
@@ -164,8 +164,6 @@ source_type: url | youtube | document | audio | file | text
 source: "{URL, file path, or description of origin}"
 captured: YYYY-MM-DD
 raw: ../raw/{descriptive-slug}--{YYYY-MM-DD}.md
-related:
-  - {id-of-related-entry}
 tags:
   - {tag}
 ---
@@ -187,9 +185,9 @@ Write in plain, direct prose.}
 Rules:
 - The `id` matches the raw file's `id` exactly.
 - The `raw` field uses a relative path from summary to raw: always `../raw/{filename}`.
-- The `related` field lists `id` values (not file paths). Resolve at read time via `Glob("**/summary/{id}.md")`.
-- The `tags` field uses lowercase, hyphenated keywords. Check existing tags across the knowledge base (Grep for `^  - ` under `tags:` in summary files) and reuse established tags.
+- The `tags` field uses lowercase, hyphenated keywords. Reuse established tags where possible.
 - When generating, read the full raw content first. Capture the core argument, not surface details.
+- Cross-entry relationships are discovered at recall time by the agent (via search, tags, or embeddings) rather than stored in individual files. This avoids token-heavy scanning during creation and maintenance during category moves.
 
 ### _category.md
 
@@ -277,7 +275,7 @@ When the user provides a URL, YouTube link, file path, or content to capture:
 
 **Step 6: Write the raw file** to `{target}/raw/{slug}--{date}.md` where `{target}` is either the chosen category or `unsorted`. Create the directory with `mkdir -p` if needed.
 
-**Step 7: Generate the summary.** Read the full raw content. Produce a summary following the template above. Scan existing summaries to populate the `related` field and reuse existing tags.
+**Step 7: Generate the summary.** Read the full raw content. Produce a summary following the template above.
 
 **Step 8: Write the summary file** to `{target}/summary/{slug}--{date}.md`.
 
@@ -328,8 +326,7 @@ Always confirm with the user before executing any reorganization.
 3. Create new category directories and `_category.md` files.
 4. Move raw and summary files via Bash `mv`.
 5. Relative `raw` paths remain correct (sibling structure preserved).
-6. `related` fields use IDs (not paths) so no updates needed.
-7. Delete the old empty category directory via Bash `rm -r` after confirming it is empty.
+6. Delete the old empty category directory via Bash `rm -r` after confirming it is empty.
 8. Update CHANGELOG.md.
 9. Update the knowledge index in agent memory.
 
@@ -340,15 +337,14 @@ Always confirm with the user before executing any reorganization.
 3. Handle filename collisions: append `-2` suffix, update `id` and `raw` path in the affected summary.
 4. Write or update target `_category.md`.
 5. Remove empty source directories.
-6. If any IDs changed, scan all summaries for `related` references to old IDs and update.
-7. Update CHANGELOG.md.
+6. Update CHANGELOG.md.
 8. Update the knowledge index in agent memory.
 
 #### Rename a Category
 
 1. Rename directory via Bash `mv`.
 2. Update `_category.md` frontmatter.
-3. No changes needed in files: `raw` paths are relative (still valid), `related` uses IDs (not paths).
+3. No changes needed in files: `raw` paths are relative and still valid.
 4. Update CHANGELOG.md.
 5. Update the knowledge index in agent memory.
 
@@ -402,10 +398,7 @@ When the user points to an existing directory, collection of files, or structure
    - Create `_category.md` files with descriptions inferred from the directory name and contents.
    - If the source structure is flat, place everything in `unsorted/` for manual sorting later.
 
-5. **Build relational links.** After all files are imported:
-   - Scan all new summaries for thematic overlap.
-   - Populate `related` fields where connections are apparent.
-   - Reuse existing tags from the knowledge base; introduce new tags only when necessary.
+5. **Tag consistency.** After all files are imported, reuse existing tags from the knowledge base; introduce new tags only when necessary.
 
 6. **Update CHANGELOG.md.** Record the import as a batch operation:
    ```
@@ -433,15 +426,11 @@ After completing any ability that writes or moves files (Abilities 1, 2, 3, 5), 
 
 ## Relational Links
 
-The knowledge base uses a two-layer linking system designed to survive category reorganization:
-
-**Layer 1 -- Raw-to-Summary correlation:**
+**Raw-to-Summary correlation:**
 Raw and summary files share the same filename in sibling `raw/` and `summary/` directories. The summary's `raw` field is always `../raw/{filename}`, which is structurally identical in every category.
 
-**Layer 2 -- Cross-entry references:**
-The `related` field in summaries contains `id` values (the filename without `.md`). IDs do not encode category. To resolve an ID to a file, use `Glob("**/summary/{id}.md")`. This makes references stable across category moves.
-
-The only case requiring ID updates is filename collision during a merge.
+**Cross-entry relationships:**
+Connections between entries are not stored in files. The agent discovers relationships at recall time using its available capabilities — tags, keyword search, embeddings, or semantic similarity. This keeps individual files lightweight and avoids maintenance overhead when categories change.
 
 ---
 
