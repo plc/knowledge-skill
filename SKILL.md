@@ -1,6 +1,6 @@
 ---
 name: knowledge
-version: 1.1.0
+version: 1.2.0
 description: |
   Personal knowledge base for capturing, summarizing, organizing, and
   recalling knowledge from URLs, YouTube videos, documents, and files.
@@ -361,7 +361,7 @@ When the user asks a question, references a topic, or requests context that the 
 2. **Locate relevant entries.** Using whatever search capabilities the agent has:
    - If the agent can search file contents (e.g., Grep, text search, embeddings), search within the identified categories' `summary/` directories for keywords related to the query.
    - If the agent can only read files, list the summary files in the relevant category directories and read their frontmatter (title, tags) to find matches.
-   - If neither works, read the `_category.md` files for the relevant categories and follow their access notes.
+   - If neither works, read the `_category.md` files for the relevant categories and follow their notes.
    - Fall back to broader search across the full knowledge base only if category-scoped search yields nothing.
 
 3. **Load into working context.** Read the relevant summary files fully. If deeper detail is needed, read the corresponding raw files via the `raw` path in the summary frontmatter. The goal is to internalize the knowledge — absorb it into the current conversation context, embedding, or working memory so it informs subsequent responses.
@@ -424,6 +424,10 @@ Rules:
 - If an entry with the same content or source already exists in the knowledge base, flag it as a duplicate and skip unless the user says otherwise.
 - For large imports (50+ files), process in batches and report progress.
 - If the source contains its own README, index, or table of contents, read it first to inform category mapping.
+
+### After Any Ability
+
+After completing any ability that writes or moves files (Abilities 1, 2, 3, 5), commit the changes to git if the knowledge base is a git repository. Use a short descriptive message. One commit per logical operation.
 
 ---
 
