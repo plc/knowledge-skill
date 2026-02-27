@@ -70,6 +70,7 @@ Categories:
 - software-design: architecture patterns, API design, system modeling
 - industrial-design: product design, materials, manufacturing
 Unsorted: 3 entries
+Books to read: 7 titles
 ```
 
 The index contains:
@@ -281,11 +282,13 @@ When the user provides a URL, YouTube link, file path, or content to capture:
 
 **Step 8: Write the summary file** to `{target}/summary/{slug}--{date}.md`.
 
-**Step 9: Update CHANGELOG.md.** Append an "Added" entry under today's date.
+**Step 9: Extract book references.** Scan the raw content and summary for mentions of books — titles, authors, "in his book...", "as described in...", ISBN references, etc. For each book found, append it to `books-to-read.md` at the knowledge base root (see Books to Read below). If the book is already listed, add this artifact's ID to its "Referenced By" column instead of creating a duplicate.
 
-**Step 10: Update the knowledge index in agent memory.** If a new category was created or the unsorted count changed, update the index immediately.
+**Step 10: Update CHANGELOG.md.** Append an "Added" entry under today's date.
 
-**Step 11: Report to the user.** Display the title, source, summary key points, file locations, and the category it was placed in (or note that it's in `unsorted/` and suggest sorting).
+**Step 11: Update the knowledge index in agent memory.** If a new category was created or the unsorted count changed, update the index immediately.
+
+**Step 12: Report to the user.** Display the title, source, summary key points, file locations, the category it was placed in (or note that it's in `unsorted/` and suggest sorting), and any books that were extracted.
 
 ### Ability 2: Sort Unsorted Knowledge
 
@@ -474,6 +477,32 @@ When generating tags, check existing tags across the knowledge base and reuse es
 ### Writing Style in Summaries
 - Plain, direct prose. No promotional language.
 - Active voice. Specific facts over vague characterizations.
+
+---
+
+## Books to Read
+
+A flat index file at the knowledge base root that automatically captures book references found in any processed artifact.
+
+### File: `books-to-read.md`
+
+```markdown
+# Books to Read
+
+| Title | Author | Referenced By | Date Added |
+|-------|--------|---------------|------------|
+| Deep Work | Cal Newport | deep-work-productivity--2026-02-27 | 2026-02-27 |
+| Atomic Habits | James Clear | habit-stacking-overview--2026-02-27, morning-routine-video--2026-02-28 | 2026-02-28 |
+```
+
+### Rules
+
+- Create this file on first use (when the first book reference is found), not during initialization.
+- Each row is one book. The "Referenced By" column contains a comma-separated list of artifact IDs that mention this book.
+- When a book is already in the table and a new artifact references it, append the new artifact ID to the existing row's "Referenced By" column. Do not add a duplicate row.
+- Extract whatever is available: title is required, author is best-effort. If the author isn't mentioned, leave the column as `—`.
+- Be conservative — only extract clear book references, not vague mentions of "a book about X".
+- The memory index should include a line like `Books to read: {count} titles` so the agent is aware the list exists.
 
 ---
 
