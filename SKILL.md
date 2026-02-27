@@ -29,7 +29,27 @@ Manage a personal knowledge base that extracts content from artifacts, generates
 
 ## Configuration
 
-- **Knowledge base path:** `/Users/plc/Documents/knowledge/`
+### Knowledge Base Path
+
+The knowledge base path is not hardcoded. On first invocation:
+
+1. **Check agent memory.** Look for a previously stored knowledge base path in the agent's persistent memory or configuration (e.g., MEMORY.md, project config, environment variable `KNOWLEDGE_BASE_PATH`).
+
+2. **If no path is stored**, ask the user where to store the knowledge base. Suggest a sensible default based on the platform:
+   - macOS/Linux: `~/Documents/knowledge/` or `~/knowledge/`
+   - If the current working directory seems intentional, offer that as an option
+   - If the agent has a home or workspace directory, suggest a `knowledge/` subdirectory within it
+
+3. **Save the chosen path** to the agent's persistent memory so it is available across sessions. The mechanism depends on the agent:
+   - Claude Code: write to the auto memory directory (e.g., `MEMORY.md`)
+   - Other agents: use whatever persistent key-value store or config file is available
+
+4. **On subsequent invocations**, read the stored path from memory and use it. Do not ask again unless the path no longer exists or the user requests a change.
+
+The knowledge base directory is separate from the skill definition. The skill can live anywhere (a skills directory, a plugin repo); the data lives at the configured path.
+
+### Conventions
+
 - **Date format:** YYYY-MM-DD (ISO 8601 date only)
 - **Filename format:** `{descriptive-slug}--{YYYY-MM-DD}.md`
   - Slug: lowercase, hyphenated, 3-6 words describing the content
@@ -39,8 +59,7 @@ Manage a personal knowledge base that extracts content from artifacts, generates
 ## Directory Structure
 
 ```
-knowledge/
-  SKILL.md
+{knowledge-base-path}/
   README.md
   CHANGELOG.md
   unsorted/
@@ -56,10 +75,13 @@ Category directories are created on demand when knowledge is sorted into them.
 
 ### First-Run Initialization
 
-On first invocation, if `README.md` does not exist in the knowledge base path, create:
-1. `README.md` from the README template at the end of this skill
-2. `CHANGELOG.md` with an initial entry
-3. `unsorted/raw/` and `unsorted/summary/` directories (use `mkdir -p` via Bash)
+On first invocation:
+1. Resolve the knowledge base path (see Configuration above).
+2. If `README.md` does not exist at the knowledge base path, create:
+   - `README.md` from the README template at the end of this skill
+   - `CHANGELOG.md` with an initial entry
+   - `unsorted/raw/` and `unsorted/summary/` directories (use `mkdir -p` via Bash)
+3. Save the resolved path to agent memory if not already stored.
 
 ---
 
