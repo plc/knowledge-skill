@@ -19,20 +19,10 @@ Manage a personal knowledge base that extracts content from artifacts, generates
 
 The knowledge base path is not hardcoded. On first invocation:
 
-1. **Check agent memory.** Look for a previously stored knowledge base path in the agent's persistent memory or configuration (e.g., MEMORY.md, project config, environment variable `KNOWLEDGE_BASE_PATH`).
-
-2. **If no path is stored**, ask the user where to store the knowledge base. Suggest a sensible default based on the platform:
-   - macOS/Linux: `~/Documents/knowledge/` or `~/knowledge/`
-   - If the current working directory seems intentional, offer that as an option
-   - If the agent has a home or workspace directory, suggest a `knowledge/` subdirectory within it
-
-3. **Save the chosen path** to the agent's persistent memory so it is available across sessions. The mechanism depends on the agent:
-   - Claude Code: write to the auto memory directory (e.g., `MEMORY.md`)
-   - Other agents: use whatever persistent key-value store or config file is available
-
-4. **On subsequent invocations**, read the stored path from memory and use it. Do not ask again unless the path no longer exists or the user requests a change.
-
-The knowledge base directory is separate from the skill definition. The skill can live anywhere (a skills directory, a plugin repo); the data lives at the configured path.
+1. **Check agent memory** for a previously stored knowledge base path.
+2. **If no path is stored**, ask the user. Suggest `~/Documents/knowledge/` or a sensible default.
+3. **Save the chosen path** to the agent's persistent memory so it persists across sessions.
+4. **On subsequent invocations**, read the stored path. Do not ask again unless the path no longer exists.
 
 ### Knowledge Index in Agent Memory
 
@@ -51,14 +41,7 @@ Categories:
 Unsorted: 3 entries
 ```
 
-The index contains:
-- The knowledge base path
-- Each category name with a brief description (pulled from `_category.md`)
-- The count of unsorted entries
-
-Keep the index concise — it lives in the agent's system prompt and should not exceed ~20 lines. The purpose is awareness, not exhaustive detail. The agent can always read the actual files for specifics.
-
-When categories change (split, merge, rename, create, delete), update the index immediately. This ensures the agent's ambient awareness of what knowledge exists stays current.
+Keep the index under ~20 lines. Update it immediately after any structural change.
 
 ### Conventions
 
@@ -90,7 +73,7 @@ Category directories are created on demand when knowledge is sorted into them.
 On first invocation:
 1. Resolve the knowledge base path (see Configuration above).
 2. If `README.md` does not exist at the knowledge base path, create:
-   - `README.md` from the README template at the end of this skill
+   - `README.md` (see README Template below)
    - `CHANGELOG.md` with an initial entry
    - `unsorted/raw/` and `unsorted/summary/` directories (use `mkdir -p` via Bash)
 3. Save the resolved path to agent memory if not already stored.
@@ -100,15 +83,6 @@ On first invocation:
 If git is available and the knowledge base directory is not already a git repository, initialize one (`git init`). The knowledge base benefits from version control — it provides history for category reorganizations, a safety net for bulk imports, and makes it easy to sync across machines.
 
 After meaningful operations (adding knowledge, sorting, reorganizing), commit the changes with a short descriptive message. Keep commits atomic: one commit per logical operation rather than batching unrelated changes. Do not push unless the user has configured a remote and asks to push.
-
-### Skill Versioning
-
-The `version` field in the SKILL.md frontmatter follows semver:
-- **Patch** (1.0.x): bug fixes, wording tweaks, minor clarifications
-- **Minor** (1.x.0): new abilities, new file format fields, new configuration options
-- **Major** (x.0.0): breaking changes to directory structure, file format, or relational link design
-
-Bump the version when the skill definition itself changes, not when knowledge is added or reorganized.
 
 ---
 
@@ -277,7 +251,6 @@ When the user asks to sort knowledge or after adding new knowledge:
    b. Write `_category.md` if this is a new category.
    c. Move raw file: Bash `mv unsorted/raw/{filename} {category}/raw/{filename}`.
    d. Move summary file: Bash `mv unsorted/summary/{filename} {category}/summary/{filename}`.
-   e. The raw file is at `../raw/{same-filename}` relative to the summary — this holds in every category.
 
 6. **Update CHANGELOG.md.** Record moves and new categories.
 
@@ -295,10 +268,9 @@ Always confirm with the user before executing any reorganization.
 2. Propose which entries go to which new category. Confirm with user.
 3. Create new category directories and `_category.md` files.
 4. Move raw and summary files via Bash `mv`.
-5. Raw/summary pairing remains intact (sibling structure preserved).
-6. Delete the old empty category directory via Bash `rm -r` after confirming it is empty.
-7. Update CHANGELOG.md.
-8. Update the knowledge index in agent memory.
+5. Delete the old empty category directory via Bash `rm -r` after confirming it is empty.
+6. Update CHANGELOG.md.
+7. Update the knowledge index in agent memory.
 
 #### Merge Categories
 
@@ -336,9 +308,7 @@ When the user asks a question, references a topic, or requests context that the 
 
 5. **Cite sources.** When drawing on loaded knowledge, reference the entry by title and ID so the user can trace back to the original artifact.
 
-6. **Proactive recall.** When the user is discussing a topic and the knowledge index shows a relevant category exists, proactively load and reference it without being asked. Treat the knowledge base as an extension of memory — if relevant knowledge is there, use it.
-
-The key principle: the knowledge base is not just storage. It is an active resource. When knowledge exists that is relevant to the current conversation, load it and let it inform reasoning. The mechanism for loading (reading files into context, embedding lookup, RAG retrieval) depends on the agent's capabilities — use whatever means the agent supports to make the knowledge available.
+6. **Proactive recall.** When the knowledge index shows a relevant category exists, load and reference it without being asked. The knowledge base is an extension of memory — if relevant knowledge is there, use it.
 
 ### Ability 5: Import Existing Knowledge
 
@@ -391,16 +361,6 @@ Rules:
 ### After Any Ability
 
 After completing any ability that writes or moves files (Abilities 1, 2, 3, 5), commit the changes to git if the knowledge base is a git repository. Use a short descriptive message. One commit per logical operation.
-
----
-
-## Relational Links
-
-**Raw-to-Summary correlation:**
-Raw and summary files share the same filename in sibling `raw/` and `summary/` directories. The corresponding raw file is always at `../raw/{same-filename}` relative to any summary.
-
-**Cross-entry relationships:**
-Connections between entries are not stored in files. The agent discovers relationships at recall time using its available capabilities — keyword search, embeddings, or semantic similarity. This keeps individual files lightweight and avoids maintenance overhead when categories change.
 
 ---
 
@@ -467,39 +427,4 @@ A flat index file at the knowledge base root that automatically captures book re
 
 ## README Template
 
-Use this when initializing the knowledge base:
-
-```markdown
-# Knowledge Base
-
-Personal knowledge base managed by the `knowledge` skill.
-
-## Structure
-
-- `unsorted/` -- Newly captured knowledge awaiting categorization
-- `{category}/` -- Categorized knowledge (e.g., `fitness/`, `parenting/`, `design/`)
-
-Each directory contains:
-- `raw/` -- Full extracted content from source artifacts
-- `summary/` -- Concise summaries with key points and takeaways
-
-Category directories also contain `_category.md` defining their scope.
-
-## File Naming
-
-`{descriptive-slug}--{YYYY-MM-DD}.md`
-
-Raw and summary files for the same artifact share the same filename.
-
-## Usage
-
-- **Add knowledge:** Provide a URL, YouTube link, file path, or text
-- **Sort knowledge:** Sort entries from `unsorted/` into categories
-- **Reorganize:** Split, merge, or rename categories
-- **Search:** Grep across summaries or raw content
-- **Browse:** Read `_category.md` files for scope, then individual summaries
-
-## Changelog
-
-See `CHANGELOG.md` for all additions and structural changes.
-```
+On first-run, generate a brief `README.md` explaining the directory structure, file naming convention (`{slug}--{date}.md`), and basic usage (add, sort, reorganize, search, browse).
