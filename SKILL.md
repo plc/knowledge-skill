@@ -83,6 +83,12 @@ On first invocation:
    - `unsorted/raw/` and `unsorted/summary/` directories (use `mkdir -p` via Bash)
 3. Save the resolved path to agent memory if not already stored.
 
+### Version Control
+
+If git is available and the knowledge base directory is not already a git repository, initialize one (`git init`). The knowledge base benefits from version control — it provides history for category reorganizations, a safety net for bulk imports, and makes it easy to sync across machines.
+
+After meaningful operations (adding knowledge, sorting, reorganizing), commit the changes with a short descriptive message. Keep commits atomic: one commit per logical operation rather than batching unrelated changes. Do not push unless the user has configured a remote and asks to push.
+
 ---
 
 ## File Formats
