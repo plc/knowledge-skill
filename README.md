@@ -9,7 +9,7 @@ Personal knowledge base managed by the `knowledge` skill.
 
 Each directory contains:
 - `raw/` -- Full extracted content from source artifacts
-- `summary/` -- Concise summaries with metadata and relational links
+- `summary/` -- Concise summaries with key points and takeaways
 
 Category directories also contain `_category.md` defining their scope.
 

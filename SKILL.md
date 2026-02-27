@@ -318,8 +318,8 @@ Always confirm with the user before executing any reorganization.
 4. Move raw and summary files via Bash `mv`.
 5. Raw/summary pairing remains intact (sibling structure preserved).
 6. Delete the old empty category directory via Bash `rm -r` after confirming it is empty.
-8. Update CHANGELOG.md.
-9. Update the knowledge index in agent memory.
+7. Update CHANGELOG.md.
+8. Update the knowledge index in agent memory.
 
 #### Merge Categories
 
@@ -329,7 +329,7 @@ Always confirm with the user before executing any reorganization.
 4. Write or update target `_category.md`.
 5. Remove empty source directories.
 6. Update CHANGELOG.md.
-8. Update the knowledge index in agent memory.
+7. Update the knowledge index in agent memory.
 
 #### Rename a Category
 
@@ -441,7 +441,7 @@ After adding knowledge, briefly note if reorganization might be warranted. Examp
 ## Process Conventions
 
 ### Idempotency
-Before creating a new raw file, check if a file with the same `id` already exists anywhere (Glob `**/raw/{slug}--{date}.md`). If so, warn the user and ask whether to overwrite or suffix.
+Before creating a new raw file, check if a file with the same filename already exists anywhere (Glob `**/raw/{slug}--{date}.md`). If so, warn the user and ask whether to overwrite or suffix.
 
 ### Date Collisions
 If two artifacts about similar topics are captured on the same day and produce the same slug, append a numeric suffix: `{slug}-2--{date}.md`.
@@ -502,7 +502,7 @@ Personal knowledge base managed by the `knowledge` skill.
 
 Each directory contains:
 - `raw/` -- Full extracted content from source artifacts
-- `summary/` -- Concise summaries with metadata and relational links
+- `summary/` -- Concise summaries with key points and takeaways
 
 Category directories also contain `_category.md` defining their scope.
 
