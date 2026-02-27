@@ -1,6 +1,6 @@
 ---
 name: knowledge
-version: 1.0.0
+version: 1.1.0
 description: |
   Personal knowledge base for capturing, summarizing, organizing, and
   recalling knowledge from URLs, YouTube videos, documents, and files.
@@ -122,6 +122,15 @@ If git is available and the knowledge base directory is not already a git reposi
 
 After meaningful operations (adding knowledge, sorting, reorganizing), commit the changes with a short descriptive message. Keep commits atomic: one commit per logical operation rather than batching unrelated changes. Do not push unless the user has configured a remote and asks to push.
 
+### Skill Versioning
+
+The `version` field in the SKILL.md frontmatter follows semver:
+- **Patch** (1.0.x): bug fixes, wording tweaks, minor clarifications
+- **Minor** (1.x.0): new abilities, new file format fields, new configuration options
+- **Major** (x.0.0): breaking changes to directory structure, file format, or relational link design
+
+Bump the version when the skill definition itself changes, not when knowledge is added or reorganized.
+
 ---
 
 ## File Formats
@@ -196,14 +205,10 @@ description: "{One-sentence scope definition}"
 {1-3 sentences defining what belongs in this category and what does not.
 Be specific enough to resolve ambiguity when sorting.}
 
-## Entries
+## Notes
 
-Summaries: `summary/*.md`
-Raw content: `raw/*.md`
-
-## Access Notes
-
-{Optional guidance on navigating this category.}
+{Optional guidance on navigating this category, notable themes,
+or conventions specific to this domain.}
 ```
 
 ### CHANGELOG.md Format
@@ -268,15 +273,19 @@ When the user provides a URL, YouTube link, file path, or content to capture:
 
 **Step 4: Check for duplicates.** Grep across `**/raw/*.md` for the source URL in frontmatter. If found, warn the user and ask whether to overwrite or create a suffixed version.
 
-**Step 5: Write the raw file** to `unsorted/raw/{slug}--{date}.md`. Create the directory with `mkdir -p` if needed.
+**Step 5: Determine placement.** Consult the knowledge index in agent memory. If an existing category is an obvious fit for this content (e.g., a workout video clearly belongs in `fitness`), place it directly in that category. If the fit is ambiguous or no category matches, place it in `unsorted/`. When in doubt, use `unsorted/`.
 
-**Step 6: Generate the summary.** Read the full raw content. Produce a summary following the template above. Scan existing summaries (Glob `**/summary/*.md`, spot-read a few) to populate the `related` field and reuse existing tags.
+**Step 6: Write the raw file** to `{target}/raw/{slug}--{date}.md` where `{target}` is either the chosen category or `unsorted`. Create the directory with `mkdir -p` if needed.
 
-**Step 7: Write the summary file** to `unsorted/summary/{slug}--{date}.md`.
+**Step 7: Generate the summary.** Read the full raw content. Produce a summary following the template above. Scan existing summaries to populate the `related` field and reuse existing tags.
 
-**Step 8: Update CHANGELOG.md.** Append an "Added" entry under today's date.
+**Step 8: Write the summary file** to `{target}/summary/{slug}--{date}.md`.
 
-**Step 9: Report to the user.** Display the title, source, summary key points, file locations, and suggest sorting if appropriate categories exist.
+**Step 9: Update CHANGELOG.md.** Append an "Added" entry under today's date.
+
+**Step 10: Update the knowledge index in agent memory.** If a new category was created or the unsorted count changed, update the index immediately.
+
+**Step 11: Report to the user.** Display the title, source, summary key points, file locations, and the category it was placed in (or note that it's in `unsorted/` and suggest sorting).
 
 ### Ability 2: Sort Unsorted Knowledge
 
@@ -302,7 +311,9 @@ When the user asks to sort knowledge or after adding new knowledge:
 
 6. **Update CHANGELOG.md.** Record moves and new categories.
 
-7. **Report to the user.**
+7. **Update the knowledge index in agent memory.** Reflect any new categories and the updated unsorted count.
+
+8. **Report to the user.**
 
 ### Ability 3: Reorganize Categories
 
@@ -318,6 +329,7 @@ Always confirm with the user before executing any reorganization.
 6. `related` fields use IDs (not paths) so no updates needed.
 7. Delete the old empty category directory via Bash `rm -r` after confirming it is empty.
 8. Update CHANGELOG.md.
+9. Update the knowledge index in agent memory.
 
 #### Merge Categories
 
@@ -328,6 +340,7 @@ Always confirm with the user before executing any reorganization.
 5. Remove empty source directories.
 6. If any IDs changed, scan all summaries for `related` references to old IDs and update.
 7. Update CHANGELOG.md.
+8. Update the knowledge index in agent memory.
 
 #### Rename a Category
 
@@ -335,24 +348,29 @@ Always confirm with the user before executing any reorganization.
 2. Update `_category.md` frontmatter.
 3. No changes needed in files: `raw` paths are relative (still valid), `related` uses IDs (not paths).
 4. Update CHANGELOG.md.
+5. Update the knowledge index in agent memory.
 
 ### Ability 4: Recall Knowledge
 
 When the user asks a question, references a topic, or requests context that the knowledge base may contain:
 
-1. **Search the knowledge base.** Use Grep across `**/summary/*.md` for keywords related to the query. Also check `**/raw/*.md` if summaries don't surface enough.
+1. **Consult the knowledge index.** The memory index lists all categories with brief descriptions. Use it to identify which categories are likely relevant to the query. This narrows the search before touching any files.
 
-2. **Read matching summaries.** For each hit, read the full summary file to assess relevance.
+2. **Locate relevant entries.** Using whatever search capabilities the agent has:
+   - If the agent can search file contents (e.g., Grep, text search, embeddings), search within the identified categories' `summary/` directories for keywords related to the query.
+   - If the agent can only read files, list the summary files in the relevant category directories and read their frontmatter (title, tags) to find matches.
+   - If neither works, read the `_category.md` files for the relevant categories and follow their access notes.
+   - Fall back to broader search across the full knowledge base only if category-scoped search yields nothing.
 
-3. **Load into working context.** Read the relevant summary files fully. If deeper detail is needed, read the corresponding raw files. The goal is to internalize the knowledge — absorb it into the current conversation context, embedding, or working memory so it informs subsequent responses.
+3. **Load into working context.** Read the relevant summary files fully. If deeper detail is needed, read the corresponding raw files via the `raw` path in the summary frontmatter. The goal is to internalize the knowledge — absorb it into the current conversation context, embedding, or working memory so it informs subsequent responses.
 
 4. **Synthesize across entries.** When multiple entries are relevant, connect them. Surface patterns, contradictions, or complementary perspectives across the loaded knowledge.
 
 5. **Cite sources.** When drawing on loaded knowledge, reference the entry by title and ID so the user can trace back to the original artifact.
 
-6. **Proactive recall.** When the user is discussing a topic and relevant knowledge exists in the base, proactively load and reference it without being asked. Treat the knowledge base as an extension of memory — if relevant knowledge is there, use it.
+6. **Proactive recall.** When the user is discussing a topic and the knowledge index shows a relevant category exists, proactively load and reference it without being asked. Treat the knowledge base as an extension of memory — if relevant knowledge is there, use it.
 
-The key principle: the knowledge base is not just storage. It is an active resource. When knowledge exists that is relevant to the current conversation, load it and let it inform reasoning. The mechanism for loading (reading files into context, embedding lookup, RAG retrieval) depends on the agent's capabilities — the instruction is to make the knowledge available by whatever means the agent supports.
+The key principle: the knowledge base is not just storage. It is an active resource. When knowledge exists that is relevant to the current conversation, load it and let it inform reasoning. The mechanism for loading (reading files into context, embedding lookup, RAG retrieval) depends on the agent's capabilities — use whatever means the agent supports to make the knowledge available.
 
 ### Ability 5: Import Existing Knowledge
 
@@ -395,7 +413,9 @@ When the user points to an existing directory, collection of files, or structure
    - Entries placed in unsorted: {count}
    ```
 
-7. **Report to the user.** Summarize what was imported, where it landed, and flag anything that needs manual attention (duplicates, unprocessable files, ambiguous categorization).
+7. **Update the knowledge index in agent memory.** Reflect all new categories and updated entry counts.
+
+8. **Report to the user.** Summarize what was imported, where it landed, and flag anything that needs manual attention (duplicates, unprocessable files, ambiguous categorization).
 
 Rules:
 - Never modify or delete the source files. The import is a copy operation.
