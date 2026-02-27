@@ -1,11 +1,17 @@
 ---
 name: knowledge
-description: Personal knowledge base for capturing, summarizing, organizing, and recalling knowledge from URLs, YouTube videos, documents, and files. Activate this skill in two scenarios: (1) Explicit knowledge operations -- the user says save this, add to knowledge, capture this article, summarize this video, sort knowledge, organize categories, import knowledge, etc. (2) Proactive recall -- the user asks about ANY topic where the knowledge base might have relevant entries. This includes general questions like what is a good workout routine, how should I approach this design problem, what do I know about sleep training, etc. When in doubt, check the knowledge base -- it is an extension of memory. Search it whenever the user's question touches a topic that could plausibly have been captured previously.
+description: Capture, summarize, and organize knowledge from URLs, YouTube videos, documents, and files. Proactively recall stored knowledge when relevant.
 ---
 
 # Knowledge: Capture, Summarize, and Organize
 
 Manage a personal knowledge base that extracts content from artifacts, generates summaries, and organizes entries into fluid categories.
+
+**When to activate this skill:**
+
+1. **Explicit knowledge operations:** the user says "save this", "add to knowledge", "capture this article", "summarize this video", "sort knowledge", "organize categories", "import knowledge", etc.
+
+2. **Proactive recall:** the user asks about ANY topic where the knowledge base might have relevant entries. This includes general questions like "what's a good workout routine", "how should I approach this design problem", "what do I know about sleep training", etc. When in doubt, check the knowledge base -- it is an extension of memory. Search it whenever the user's question touches a topic that could plausibly have been captured previously.
 
 ## Configuration
 
