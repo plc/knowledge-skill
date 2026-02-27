@@ -1,6 +1,6 @@
 ---
 name: knowledge
-version: 1.4.0
+version: 1.5.0
 description: |
   Personal knowledge base for capturing, summarizing, organizing, and
   recalling knowledge from URLs, YouTube videos, documents, and files.
@@ -159,8 +159,6 @@ Rules:
 ---
 title: "{Human-readable title}"
 source: "{URL, file path, or description of origin}"
-tags:
-  - {tag}
 ---
 
 ## Summary
@@ -177,12 +175,11 @@ Write in plain, direct prose.}
 {1-2 sentences on why this matters or how it connects to broader themes.}
 ```
 
-The filename carries the ID and date. The corresponding raw file is always at `../raw/{same-filename}`.
+The filename carries the ID and date. The corresponding raw file is always at `../raw/{same-filename}`. Category directories and descriptive filenames provide the semantic structure — no tags needed.
 
 Rules:
-- The `tags` field uses lowercase, hyphenated keywords. Reuse established tags where possible.
 - When generating, read the full raw content first. Capture the core argument, not surface details.
-- Cross-entry relationships are discovered at recall time by the agent (via search, tags, or embeddings) rather than stored in individual files.
+- Cross-entry relationships are discovered at recall time by the agent (via search, category context, or embeddings) rather than stored in individual files.
 
 ### _category.md
 
@@ -285,7 +282,7 @@ When the user provides a URL, YouTube link, file path, or content to capture:
 
 When the user asks to sort knowledge or after adding new knowledge:
 
-1. **Enumerate unsorted entries.** Glob `unsorted/summary/*.md`. Read frontmatter for IDs, titles, tags.
+1. **Enumerate unsorted entries.** Glob `unsorted/summary/*.md`. Read frontmatter for titles.
 
 2. **Enumerate existing categories.** Glob `*/_category.md` (excluding `unsorted/`). Read each for scope.
 
@@ -350,7 +347,7 @@ When the user asks a question, references a topic, or requests context that the 
 
 2. **Locate relevant entries.** Using whatever search capabilities the agent has:
    - If the agent can search file contents (e.g., Grep, text search, embeddings), search within the identified categories' `summary/` directories for keywords related to the query.
-   - If the agent can only read files, list the summary files in the relevant category directories and read their frontmatter (title, tags) to find matches.
+   - If the agent can only read files, list the summary files in the relevant category directories and read their frontmatter (title) and content to find matches.
    - If neither works, read the `_category.md` files for the relevant categories and follow their notes.
    - Fall back to broader search across the full knowledge base only if category-scoped search yields nothing.
 
@@ -392,7 +389,7 @@ When the user points to an existing directory, collection of files, or structure
    - Create `_category.md` files with descriptions inferred from the directory name and contents.
    - If the source structure is flat, place everything in `unsorted/` for manual sorting later.
 
-5. **Tag consistency.** After all files are imported, reuse existing tags from the knowledge base; introduce new tags only when necessary.
+5. **Verify placement.** After all files are imported, confirm entries are in appropriate categories.
 
 6. **Update CHANGELOG.md.** Record the import as a batch operation:
    ```
@@ -424,7 +421,7 @@ After completing any ability that writes or moves files (Abilities 1, 2, 3, 5), 
 Raw and summary files share the same filename in sibling `raw/` and `summary/` directories. The corresponding raw file is always at `../raw/{same-filename}` relative to any summary.
 
 **Cross-entry relationships:**
-Connections between entries are not stored in files. The agent discovers relationships at recall time using its available capabilities — tags, keyword search, embeddings, or semantic similarity. This keeps individual files lightweight and avoids maintenance overhead when categories change.
+Connections between entries are not stored in files. The agent discovers relationships at recall time using its available capabilities — keyword search, embeddings, or semantic similarity. This keeps individual files lightweight and avoids maintenance overhead when categories change.
 
 ---
 
@@ -451,9 +448,6 @@ If two artifacts about similar topics are captured on the same day and produce t
 
 ### Empty Categories
 When the last entry leaves a category, ask the user whether to delete the empty category or keep it for future use.
-
-### Tag Consistency
-When generating tags, check existing tags across the knowledge base and reuse established tags rather than creating near-duplicates.
 
 ### Error Handling
 - If WebFetch fails, report the error and ask the user to provide content another way.
