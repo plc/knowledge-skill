@@ -1,6 +1,6 @@
 ---
 name: knowledge
-version: 1.3.0
+version: 1.4.0
 description: |
   Personal knowledge base for capturing, summarizing, organizing, and
   recalling knowledge from URLs, YouTube videos, documents, and files.
@@ -139,15 +139,14 @@ Bump the version when the skill definition itself changes, not when knowledge is
 
 ```markdown
 ---
-id: {descriptive-slug}--{YYYY-MM-DD}
 title: "{Human-readable title}"
-source_type: url | youtube | document | audio | file | text
 source: "{URL, file path, or description of origin}"
-captured: YYYY-MM-DD
 ---
 
 {Full extracted content. Preserve original structure where possible.}
 ```
+
+The filename carries the ID and date (`{slug}--{YYYY-MM-DD}.md`). No need to duplicate them in frontmatter.
 
 Rules:
 - Preserve content faithfully. Do not editorialize.
@@ -158,12 +157,8 @@ Rules:
 
 ```markdown
 ---
-id: {descriptive-slug}--{YYYY-MM-DD}
 title: "{Human-readable title}"
-source_type: url | youtube | document | audio | file | text
 source: "{URL, file path, or description of origin}"
-captured: YYYY-MM-DD
-raw: ../raw/{descriptive-slug}--{YYYY-MM-DD}.md
 tags:
   - {tag}
 ---
@@ -182,19 +177,18 @@ Write in plain, direct prose.}
 {1-2 sentences on why this matters or how it connects to broader themes.}
 ```
 
+The filename carries the ID and date. The corresponding raw file is always at `../raw/{same-filename}`.
+
 Rules:
-- The `id` matches the raw file's `id` exactly.
-- The `raw` field uses a relative path from summary to raw: always `../raw/{filename}`.
 - The `tags` field uses lowercase, hyphenated keywords. Reuse established tags where possible.
 - When generating, read the full raw content first. Capture the core argument, not surface details.
-- Cross-entry relationships are discovered at recall time by the agent (via search, tags, or embeddings) rather than stored in individual files. This avoids token-heavy scanning during creation and maintenance during category moves.
+- Cross-entry relationships are discovered at recall time by the agent (via search, tags, or embeddings) rather than stored in individual files.
 
 ### _category.md
 
 ```markdown
 ---
 category: {category-slug}
-created: YYYY-MM-DD
 description: "{One-sentence scope definition}"
 ---
 
@@ -307,7 +301,7 @@ When the user asks to sort knowledge or after adding new knowledge:
    b. Write `_category.md` if this is a new category.
    c. Move raw file: Bash `mv unsorted/raw/{filename} {category}/raw/{filename}`.
    d. Move summary file: Bash `mv unsorted/summary/{filename} {category}/summary/{filename}`.
-   e. The `raw` relative path in the summary (`../raw/{filename}`) remains correct since the sibling structure is preserved.
+   e. The raw file is at `../raw/{same-filename}` relative to the summary — this holds in every category.
 
 6. **Update CHANGELOG.md.** Record moves and new categories.
 
@@ -325,7 +319,7 @@ Always confirm with the user before executing any reorganization.
 2. Propose which entries go to which new category. Confirm with user.
 3. Create new category directories and `_category.md` files.
 4. Move raw and summary files via Bash `mv`.
-5. Relative `raw` paths remain correct (sibling structure preserved).
+5. Raw/summary pairing remains intact (sibling structure preserved).
 6. Delete the old empty category directory via Bash `rm -r` after confirming it is empty.
 8. Update CHANGELOG.md.
 9. Update the knowledge index in agent memory.
@@ -334,7 +328,7 @@ Always confirm with the user before executing any reorganization.
 
 1. Create the target category if it does not exist.
 2. Move all raw and summary files from source categories to target.
-3. Handle filename collisions: append `-2` suffix, update `id` and `raw` path in the affected summary.
+3. Handle filename collisions: append `-2` suffix to both raw and summary filenames.
 4. Write or update target `_category.md`.
 5. Remove empty source directories.
 6. Update CHANGELOG.md.
@@ -344,7 +338,7 @@ Always confirm with the user before executing any reorganization.
 
 1. Rename directory via Bash `mv`.
 2. Update `_category.md` frontmatter.
-3. No changes needed in files: `raw` paths are relative and still valid.
+3. No changes needed in files — filenames are unchanged, raw/summary pairing holds.
 4. Update CHANGELOG.md.
 5. Update the knowledge index in agent memory.
 
@@ -360,7 +354,7 @@ When the user asks a question, references a topic, or requests context that the 
    - If neither works, read the `_category.md` files for the relevant categories and follow their notes.
    - Fall back to broader search across the full knowledge base only if category-scoped search yields nothing.
 
-3. **Load into working context.** Read the relevant summary files fully. If deeper detail is needed, read the corresponding raw files via the `raw` path in the summary frontmatter. The goal is to internalize the knowledge — absorb it into the current conversation context, embedding, or working memory so it informs subsequent responses.
+3. **Load into working context.** Read the relevant summary files fully. If deeper detail is needed, read the corresponding raw file at `../raw/{same-filename}`. The goal is to internalize the knowledge — absorb it into the current conversation context, embedding, or working memory so it informs subsequent responses.
 
 4. **Synthesize across entries.** When multiple entries are relevant, connect them. Surface patterns, contradictions, or complementary perspectives across the loaded knowledge.
 
@@ -427,7 +421,7 @@ After completing any ability that writes or moves files (Abilities 1, 2, 3, 5), 
 ## Relational Links
 
 **Raw-to-Summary correlation:**
-Raw and summary files share the same filename in sibling `raw/` and `summary/` directories. The summary's `raw` field is always `../raw/{filename}`, which is structurally identical in every category.
+Raw and summary files share the same filename in sibling `raw/` and `summary/` directories. The corresponding raw file is always at `../raw/{same-filename}` relative to any summary.
 
 **Cross-entry relationships:**
 Connections between entries are not stored in files. The agent discovers relationships at recall time using its available capabilities — tags, keyword search, embeddings, or semantic similarity. This keeps individual files lightweight and avoids maintenance overhead when categories change.
