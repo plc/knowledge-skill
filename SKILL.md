@@ -70,7 +70,6 @@ Categories:
 - software-design: architecture patterns, API design, system modeling
 - industrial-design: product design, materials, manufacturing
 Unsorted: 3 entries
-Books to read: 7 titles
 ```
 
 The index contains:
@@ -502,7 +501,7 @@ A flat index file at the knowledge base root that automatically captures book re
 - When a book is already in the table and a new artifact references it, append the new artifact ID to the existing row's "Referenced By" column. Do not add a duplicate row.
 - Extract whatever is available: title is required, author is best-effort. If the author isn't mentioned, leave the column as `—`.
 - Be conservative — only extract clear book references, not vague mentions of "a book about X".
-- The memory index should include a line like `Books to read: {count} titles` so the agent is aware the list exists.
+- This file is not tracked in the memory index. It is accessed explicitly when the user asks for book recommendations or reading lists.
 
 ---
 
