@@ -7,8 +7,6 @@ description: Personal knowledge base for capturing, summarizing, organizing, and
 
 Manage a personal knowledge base that extracts content from artifacts, generates summaries, and organizes entries into fluid categories.
 
-**Allowed tools:** Read, Write, Edit, Glob, Grep, Bash, WebFetch, AskUserQuestion, TodoWrite
-
 ## Configuration
 
 ### Knowledge Base Path
