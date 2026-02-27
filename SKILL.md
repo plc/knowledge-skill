@@ -55,6 +55,32 @@ The knowledge base path is not hardcoded. On first invocation:
 
 The knowledge base directory is separate from the skill definition. The skill can live anywhere (a skills directory, a plugin repo); the data lives at the configured path.
 
+### Knowledge Index in Agent Memory
+
+The agent's persistent memory should contain a lightweight index of the knowledge base so that category awareness is always in context — even before this skill is activated. This is what makes proactive recall possible.
+
+After any operation that changes the knowledge base structure (adding entries, sorting, creating/splitting/merging/renaming categories), update the index in agent memory. The index should look approximately like this:
+
+```
+## Knowledge Base
+Path: ~/Documents/knowledge/
+Categories:
+- fitness: exercise routines, nutrition, recovery
+- parenting: child development, sleep training, education approaches
+- software-design: architecture patterns, API design, system modeling
+- industrial-design: product design, materials, manufacturing
+Unsorted: 3 entries
+```
+
+The index contains:
+- The knowledge base path
+- Each category name with a brief description (pulled from `_category.md`)
+- The count of unsorted entries
+
+Keep the index concise — it lives in the agent's system prompt and should not exceed ~20 lines. The purpose is awareness, not exhaustive detail. The agent can always read the actual files for specifics.
+
+When categories change (split, merge, rename, create, delete), update the index immediately. This ensures the agent's ambient awareness of what knowledge exists stays current.
+
 ### Conventions
 
 - **Date format:** YYYY-MM-DD (ISO 8601 date only)
