@@ -191,6 +191,8 @@ When the user provides a URL, YouTube link, file path, or content to capture:
 
 **Step 2: Extract raw content.**
 
+⚠️ **YouTube/Vimeo = knowledge skill. Other sites = vidl.py.** Always use yt-dlp directly for YouTube/Vimeo transcripts (subtitle extraction only, no video downloads). Never use vidl.py for knowledge capture.
+
 | Source | Method |
 |--------|--------|
 | URL | `WebFetch(url, "Extract the main article content of this page as plain text")` |
