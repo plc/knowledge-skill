@@ -191,24 +191,19 @@ When the user provides a URL, YouTube link, file path, or content to capture:
 
 **Step 2: Extract raw content.**
 
-⚠️ **YouTube/Vimeo = knowledge skill. Other sites = vidl.py.** Always use yt-dlp directly for YouTube/Vimeo transcripts (subtitle extraction only, no video downloads). Never use vidl.py for knowledge capture.
+For YouTube videos, do not hand-roll transcript extraction in this skill. Use the generic `youtube-transcript` skill as the transcript source.
 
 | Source | Method |
 |--------|--------|
 | URL | `WebFetch(url, "Extract the main article content of this page as plain text")` |
-| YouTube | Bash: `yt-dlp --write-auto-sub --sub-lang "en" --skip-download --print title --print description -o "/tmp/yt-%(id)s" "{url}"` then Read the `.vtt` file and clean it (see transcript cleaning below) |
+| YouTube | Run `bash /Users/robot/.openclaw/workspace/skills/youtube-transcript/scripts/extract-youtube-transcript.sh "{url}"` and use the returned `.txt` transcript path as the raw source |
 | Local file | `Read(filepath)` |
 | Audio | Bash: `whisper "{path}" --output_format txt` if available; otherwise note as placeholder |
 | Pasted text | Use directly |
 
-**YouTube transcript cleaning:**
-1. Remove VTT headers (`WEBVTT`, `Kind:`, `Language:`)
-2. Remove timestamp lines (lines matching `XX:XX:XX.XXX --> XX:XX:XX.XXX`)
-3. Remove duplicate consecutive lines
-4. Collapse blank lines
-5. Insert `[HH:MM:SS]` markers approximately every 60 seconds as paragraph breaks
-6. Clean up via Bash pipeline, then read and format the result
-7. Clean up temporary files in `/tmp/`
+The `youtube-transcript` skill handles both cases:
+1. captions exist, use and clean them
+2. captions do not exist, fall back to local Whisper transcription
 
 **Step 3: Generate descriptive slug.** Read the extracted content and produce a 3-6 word lowercase hyphenated slug. Examples:
 - `deep-work-productivity-strategies--2026-02-27`
@@ -298,19 +293,25 @@ When the user asks a question, references a topic, or requests context that the 
 
 1. **Consult the knowledge index.** The memory index lists all categories with brief descriptions. Use it to identify which categories are likely relevant to the query. This narrows the search before touching any files.
 
-2. **Locate relevant entries.** Using whatever search capabilities the agent has:
-   - If the agent can search file contents (e.g., Grep, text search, embeddings), search within the identified categories' `summary/` directories for keywords related to the query.
-   - If the agent can only read files, list the summary files in the relevant category directories and read their frontmatter (title) and content to find matches.
-   - If neither works, read the `_category.md` files for the relevant categories and follow their notes.
+2. **Use QMD first when available.** Prefer semantic retrieval through QMD or the agent's equivalent indexed search layer.
+   - Search the likely relevant categories first, especially their `summary/` directories.
+   - If category scoping is not available in QMD, search the full knowledge base and then narrow by path/category in the returned matches.
+   - Use filesystem keyword search only as a fallback when QMD is unavailable, stale, or clearly missing expected results.
+
+3. **Fall back cleanly when QMD is unavailable.** If QMD or semantic retrieval is not available:
+   - Search within the identified categories' `summary/` directories using grep, text search, or filename/frontmatter inspection.
+   - If needed, read `_category.md` files for scope hints.
    - Fall back to broader search across the full knowledge base only if category-scoped search yields nothing.
 
-3. **Load into working context.** Read the relevant summary files fully. If deeper detail is needed, read the corresponding raw file at `../raw/{same-filename}`. The goal is to internalize the knowledge — absorb it into the current conversation context, embedding, or working memory so it informs subsequent responses.
+4. **Load into working context.** Read the relevant summary files fully. If deeper detail is needed, read the corresponding raw file at `../raw/{same-filename}`. Use QMD to find candidates, but use the actual files to ground the final answer.
 
-4. **Synthesize across entries.** When multiple entries are relevant, connect them. Surface patterns, contradictions, or complementary perspectives across the loaded knowledge.
+5. **Synthesize across entries.** When multiple entries are relevant, connect them. Surface patterns, contradictions, or complementary perspectives across the loaded knowledge.
 
-5. **Cite sources.** When drawing on loaded knowledge, reference the entry by title and ID so the user can trace back to the original artifact.
+6. **Cite sources.** When drawing on loaded knowledge, reference the entry by title and ID so the user can trace back to the original artifact.
 
-6. **Proactive recall.** When the knowledge index shows a relevant category exists, load and reference it without being asked. The knowledge base is an extension of memory — if relevant knowledge is there, use it.
+7. **Proactive recall.** When the user is discussing a topic and the knowledge index shows a relevant category exists, proactively load and reference it without being asked. Treat the knowledge base as an extension of memory — if relevant knowledge is there, use it.
+
+The key principle: the knowledge base is not just storage. It is an active resource. When knowledge exists that is relevant to the current conversation, prefer indexed semantic retrieval through QMD, then load the underlying files so the answer stays grounded in the real source material.
 
 ### Ability 5: Import Existing Knowledge
 
@@ -363,6 +364,16 @@ Rules:
 ### After Any Ability
 
 After completing any ability that writes or moves files (Abilities 1, 2, 3, 5), commit the changes to git if the knowledge base is a git repository. Use a short descriptive message. One commit per logical operation.
+
+---
+
+## Relational Links
+
+**Raw-to-Summary correlation:**
+Raw and summary files share the same filename in sibling `raw/` and `summary/` directories. The corresponding raw file is always at `../raw/{same-filename}` relative to any summary.
+
+**Cross-entry relationships:**
+Connections between entries are not stored in files. The agent discovers relationships at recall time using QMD first, then keyword search or manual file review as fallback. This keeps individual files lightweight and avoids maintenance overhead when categories change.
 
 ---
 
