@@ -191,19 +191,26 @@ When the user provides a URL, YouTube link, file path, or content to capture:
 
 **Step 2: Extract raw content.**
 
-For YouTube videos, do not hand-roll transcript extraction in this skill. Use the generic `youtube-transcript` skill as the transcript source.
+For YouTube videos, prefer the generic `youtube-transcript` skill as the transcript source, but do not hard-fail if it is missing.
 
 | Source | Method |
 |--------|--------|
 | URL | `WebFetch(url, "Extract the main article content of this page as plain text")` |
-| YouTube | Run `bash /Users/robot/.openclaw/workspace/skills/youtube-transcript/scripts/extract-youtube-transcript.sh "{url}"` and use the returned `.txt` transcript path as the raw source |
+| YouTube | Prefer `bash /Users/robot/.openclaw/workspace/skills/youtube-transcript/scripts/extract-youtube-transcript.sh "{url}"` and use the returned `.txt` transcript path as the raw source |
 | Local file | `Read(filepath)` |
 | Audio | Bash: `whisper "{path}" --output_format txt` if available; otherwise note as placeholder |
 | Pasted text | Use directly |
 
-The `youtube-transcript` skill handles both cases:
-1. captions exist, use and clean them
-2. captions do not exist, fall back to local Whisper transcription
+**YouTube fallback rules:**
+1. First, check whether the `youtube-transcript` script exists and is executable.
+2. If it exists, use it. It handles both cases:
+   - captions exist, use and clean them
+   - captions do not exist, fall back to local Whisper transcription
+3. If it does not exist, fall back to a simple local path:
+   - try subtitle extraction with `yt-dlp`
+   - if subtitles are unavailable, try local Whisper on the downloaded audio
+4. If no working fallback is available, return a clear error that the `youtube-transcript` skill is recommended or required for reliable YouTube ingestion.
+5. Do not silently skip the artifact just because the helper skill is missing.
 
 **Step 3: Generate descriptive slug.** Read the extracted content and produce a 3-6 word lowercase hyphenated slug. Examples:
 - `deep-work-productivity-strategies--2026-02-27`
